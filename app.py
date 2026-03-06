@@ -5,6 +5,7 @@ load_dotenv(override=True)
 import os
 import time
 import shutil
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 ai = AI()
@@ -63,6 +64,13 @@ def _print_progress(index, total, last_results, last_time, avg_time, elapsed_tim
         print(separator)
     print()
 
+def _process_line(index, line, formatter):
+    start_time = time.time()
+    new_columns = ai.generateColumns(line, formatter)
+    end_time = time.time()
+    line_time = end_time - start_time
+    return index, line, new_columns, line_time
+
 def processCSV(csv, formatter):
     processingLimit = os.getenv('PROCESSING_LIMIT', False)
     try:
@@ -72,30 +80,45 @@ def processCSV(csv, formatter):
     except:
         processingLimit = False
 
+    multipleLimit = os.getenv('MULTIPLE_LINE_PROCESSING_LIMIT', '')
+    try:
+        multipleLimit = int(multipleLimit) if multipleLimit else 1
+        if multipleLimit <= 0:
+            multipleLimit = 1
+    except:
+        multipleLimit = 1
+
     total = min(len(csv), processingLimit) if processingLimit else len(csv)
     elapsed_times = []
+    results = [None] * total
+    processed_count = 0
 
-    new_csv = []
-    for index, line in enumerate(csv):
-        if processingLimit and index >= processingLimit:
-            break
+    lines_to_process = csv[:total]
+    start_wall_time = time.time()
 
-        start_time = time.time()
-        new_columns = ai.generateColumns(line, formatter)
-        end_time = time.time()
+    with ThreadPoolExecutor(max_workers=multipleLimit) as executor:
+        futures = {
+            executor.submit(_process_line, idx, line, formatter): idx
+            for idx, line in enumerate(lines_to_process)
+        }
 
-        line_time = end_time - start_time
-        elapsed_times.append(line_time)
-        avg_time = sum(elapsed_times) / len(elapsed_times)
+        for future in as_completed(futures):
+            index, line, new_columns, line_time = future.result()
 
-        new_csv.append({
-            **line,
-            **new_columns,
-        })
+            processed_count += 1
+            wall_elapsed = time.time() - start_wall_time
+            avg_time = wall_elapsed / processed_count
 
-        _print_progress(index, total, new_columns, line_time, avg_time, elapsed_times)
+            elapsed_times.append(line_time)
 
-    return new_csv
+            results[index] = {
+                **line,
+                **new_columns,
+            }
+
+            _print_progress(processed_count - 1, total, new_columns, line_time, avg_time, elapsed_times)
+
+    return results
 
 def getPath(picked_csv, new_fields):
     original_name, _ = os.path.splitext(picked_csv)

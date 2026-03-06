@@ -50,6 +50,9 @@ Variables principales:
 - `PROCESSING_LIMIT`: limita cuántas filas se procesan.
   - Ejemplo: `PROCESSING_LIMIT=100` procesa solo 100 filas.
   - Si está vacío, en `0` o en un valor inválido, procesa todo el CSV.
+- `MULTIPLE_LINE_PROCESSING_LIMIT`: cuántas filas se procesan en paralelo simultáneamente.
+  - Ejemplo: `MULTIPLE_LINE_PROCESSING_LIMIT=5` procesa 5 filas a la vez.
+  - Si está vacío, en `0` o en un valor inválido, se usa `1` (secuencial).
 
 Variables de conexión del LLM:
 
@@ -67,6 +70,7 @@ LANGUAGE=en
 REASONING_EFFORT=high
 USE_RESPONSE_FORMAT=false
 PROCESSING_LIMIT=
+MULTIPLE_LINE_PROCESSING_LIMIT=
 
 # --- Elige SOLO un proveedor ---
 

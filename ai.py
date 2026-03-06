@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 load_dotenv(override=True)
 import os
 import json
+import time
 
 def msg(content: str, role: str):
     return {
@@ -125,24 +126,32 @@ class AI:
         }
 
     def getResponse(self, messages: list, parser = False):
-        try:
-            if parser:
-                completion = self.client.chat.completions.create(
-                    messages=messages,
-                    model=self.model,
-                    response_format=parser,
-                    reasoning_effort=self.reasoning_effort,
-                ).choices[0]
-                return completion.message
-            else:
-                completion = self.client.chat.completions.create(
-                    messages=messages,
-                    model=self.model,
-                    reasoning_effort=self.reasoning_effort,
-                ).choices[0]
-                return completion.message
-        except:
-            return False
+        max_retries = 7
+        wait_time = 1
+
+        for attempt in range(max_retries + 1):
+            try:
+                if parser:
+                    completion = self.client.chat.completions.create(
+                        messages=messages,
+                        model=self.model,
+                        response_format=parser,
+                        reasoning_effort=self.reasoning_effort,
+                    ).choices[0]
+                    return completion.message
+                else:
+                    completion = self.client.chat.completions.create(
+                        messages=messages,
+                        model=self.model,
+                        reasoning_effort=self.reasoning_effort,
+                    ).choices[0]
+                    return completion.message
+            except:
+                if attempt < max_retries:
+                    time.sleep(wait_time)
+                    wait_time *= 2
+                else:
+                    return False
 
     @staticmethod
     def getTextFromShowFields(line: dict, showFields: list[str]):
