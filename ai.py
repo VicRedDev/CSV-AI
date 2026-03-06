@@ -175,7 +175,7 @@ class AI:
 
         message = self.getResponse(messages, parser)
         if not message:
-            return 'ERROR'
+            return ''
         
         if not self.use_response_format:
             return message.content
