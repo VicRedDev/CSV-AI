@@ -47,6 +47,9 @@ Variables principales:
 - `USE_RESPONSE_FORMAT`: mejora consistencia de salida estructurada (`true/false`).
   - Recomendado en modelos potentes.
   - No siempre funciona bien en modelos open source pequeños.
+- `PROCESSING_LIMIT`: limita cuántas filas se procesan.
+  - Ejemplo: `PROCESSING_LIMIT=100` procesa solo 100 filas.
+  - Si está vacío, en `0` o en un valor inválido, procesa todo el CSV.
 
 Variables de conexión del LLM:
 
@@ -63,6 +66,7 @@ LANGUAGE=en
 
 REASONING_EFFORT=high
 USE_RESPONSE_FORMAT=false
+PROCESSING_LIMIT=
 
 # --- Elige SOLO un proveedor ---
 
@@ -183,9 +187,8 @@ Ejemplo realista (tickets de soporte):
 
 - Los nombres en `show_fields` deben existir en el CSV exactamente igual.
 - Si faltan `BASE_URL`/`API_KEY`/`AI_MODEL` correctos, el proceso fallará o devolverá `ERROR`.
-- Estado actual del código: `processCSV` en `app.py` corta después de la primera fila (`break`).
-  - Resultado: hoy se procesa solo la primera línea del CSV.
-  - Si quieres procesar todo el archivo, hay que quitar ese `break`.
+- `PROCESSING_LIMIT` solo afecta la cantidad de filas procesadas; no modifica el CSV original.
+- Si `PROCESSING_LIMIT` está vacío, en `0` o es inválido, se procesan todas las filas.
 
 ## Flujo recomendado
 
@@ -194,6 +197,3 @@ Ejemplo realista (tickets de soporte):
 3. Activa/desactiva `USE_RESPONSE_FORMAT` según calidad del modelo.
 4. Cuando el resultado sea bueno, procesa archivos más grandes.
 
----
-
-Si quieres, puedo hacer el siguiente paso y dejar el proyecto listo para procesar **todas** las filas (quitando el `break`) y agregando una barra/progreso simple en consola.

@@ -1,12 +1,25 @@
 from ai import AI
-import os
 from datetime import datetime
+from dotenv import load_dotenv
+load_dotenv(override=True)
+import os
+
 
 ai = AI()
 
 def processCSV(csv, formatter):
+    processingLimit = os.getenv('PROCESSING_LIMIT', False)
+    try:
+        processingLimit = int(processingLimit) if processingLimit else False
+        if not processingLimit or processingLimit <= 0:
+            processingLimit = False
+    except:
+        processingLimit = False
+
     new_csv = []
     for index, line in enumerate(csv):
+        if processingLimit and index >= processingLimit:
+            break
         data_index = False
         
         for key in line.keys():
@@ -29,7 +42,6 @@ def processCSV(csv, formatter):
             print(f'- {key}: {new_columns[key][:30]}')
 
         print()
-        break
 
     return new_csv
 
